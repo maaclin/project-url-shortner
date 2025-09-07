@@ -1,0 +1,3 @@
+# docker build -t projects/url-shortner-repo .
+# docker tag projects/url-shortner-repo:latest 354918400698.dkr.ecr.eu-west-2.amazonaws.com/projects/url-shortner-repo:latest# docker push 354918400698.dkr.ecr.eu-west-2.amazonaws.com/url-shortner-repo:latest
+# docker push 354918400698.dkr.ecr.eu-west-2.amazonaws.com/projects/url-shortner-repo:latest
