@@ -9,8 +9,13 @@ resource "aws_ecr_repository_policy" "ecr" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Sid    = "Getuploadcontainerimage",
+      Sid    = "AllowPull",
       Effect = "Allow",
+      Principal = {
+        AWS = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.name}-ecs-task-execution-role"
+        ]
+      },
       Action = [
         "ecr:GetDownloadUrlForLayer",
         "ecr:BatchGetImage",

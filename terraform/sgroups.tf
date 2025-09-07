@@ -70,9 +70,7 @@ resource "aws_vpc_security_group_ingress_rule" "ecs" {
 
 resource "aws_vpc_security_group_egress_rule" "ecs" {
   description       = "Egress traffic temporary"
-  from_port         = 0
-  to_port           = 0
   ip_protocol       = "-1"
   security_group_id = aws_security_group.ecs_sg.id
-  cidr_ipv4       = var.allow
+  cidr_ipv4         = var.allow
 }

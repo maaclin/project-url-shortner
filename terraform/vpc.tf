@@ -109,23 +109,6 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private_rt.id]
 
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "s3:GetObject",
-      "Effect": "Allow",
-      "Resource": [
-      "arn:aws:s3:::project-ecsv2",
-      "arn:aws:s3:::project-ecsv2/*"
-      ],
-      "Principal": "*"
-    }
-  ]
-}
-POLICY
-
   tags = { Name = "${local.name}-s3" }
 
 }

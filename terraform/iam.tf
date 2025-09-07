@@ -95,3 +95,24 @@ resource "aws_iam_role_policy" "codedeploy" {
   })
 }
 
+resource "aws_iam_role_policy" "ecs_execution_ecr" {
+  name = "ecs-execution-ecr-policy"
+  role = aws_iam_role.ecs_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Action = [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      Resource = [
+        "arn:aws:ecr:${local.region}:${data.aws_caller_identity.current.account_id}:repository/projects/url-shortner-repo",
+        "*"
+      ]
+    }]
+  })
+}
