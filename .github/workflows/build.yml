@@ -1,3 +1,53 @@
-# docker build --platform linux/amd64 -t projects/eks-cluster .
-# docker tag projects/url-shortner-repo:latest 354918400698.dkr.ecr.eu-west-2.amazonaws.com/projects/url-shortner-repo:latest# docker push 354918400698.dkr.ecr.eu-west-2.amazonaws.com/url-shortner-repo:latest
-# docker push 354918400698.dkr.ecr.eu-west-2.amazonaws.com/projects/url-shortner-repo:latest
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/**"
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    working-directory: ./app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ECR_URI: "${{ secrets.ECR_URI }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "${{ secrets.ROLE_ARN }}"
+          role-session-name: github-actions-session
+          aws-region: eu-west-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build image
+        run: |
+          docker --platform linux/amd64 -t $ECR_URI:$SHORT_SHA --provenance false --no-cache .
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          image-ref: "${{ env.ECR_URI }}:${{ env.SHORT_SHA }}"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: 0
+
+      - name: Push image
+        run: |
+          docker push $ECR_URI:$SHORT_SHA
