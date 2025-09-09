@@ -57,7 +57,7 @@ resource "aws_ecs_task_definition" "ecs_task" {
           protocol      = var.tcp
         }
       ]
-      environment = [ ##reiterate what this is for 
+      environment = [ 
         {
           name  = "TABLE_NAME"
           value = aws_dynamodb_table.url.name
