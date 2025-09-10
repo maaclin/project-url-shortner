@@ -1,19 +1,16 @@
 name: CI
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "app/**"
-
-defaults:
-  run:
-    working-directory: ./app
 
 jobs:
+  
   build:
+    defaults:
+      run:
+        working-directory: ./app
     runs-on: ubuntu-latest
-    env:
-      ECR_URI: ${{ secrets.ECR_URI }}
+    outputs:
+      image: ${{ steps.push.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,16 +33,83 @@ jobs:
 
       - name: Build image
         run: |
-          docker buildx build --platform linux/amd64 -t $ECR_URI:$SHORT_SHA --provenance false --no-cache . --load
+          docker buildx build --platform linux/amd64 -t ${{ secrets.ECR_URI }}:$SHORT_SHA --provenance false --no-cache . --load
 
-      - name: Scan image
-        uses: aquasecurity/trivy-action@0.19.0
-        with:
-          image-ref: "${{ env.ECR_URI }}:${{ env.SHORT_SHA }}"
-          format: "table"
-          severity: "CRITICAL,HIGH"
-          exit-code: 0
-
+      # - name: Scan image
+      #   uses: aquasecurity/trivy-action@0.19.0
+      #   with:
+      #     image-ref: "${{ secrets.ECR_URI }}:$SHORT_SHA }}"
+      #     format: "table"
+      #     severity: "CRITICAL,HIGH"
+      #     exit-code: 0
+          
       - name: Push image
+        id: push
         run: |
-          docker push $ECR_URI:$SHORT_SHA
+          docker push ${{ secrets.ECR_URI }}:$SHORT_SHA
+          echo "image=${{ secrets.ECR_URI }}:$SHORT_SHA" >> $GITHUB_OUTPUT
+
+
+  deploy:
+    outputs:
+      task_definition: ${{ steps.update-task-def.task-definition }}
+    needs: build
+    runs-on: ubuntu-latest
+    env: 
+      container_port: 8080
+      container_name: ecs-v2
+      cluster: ecs-v2-cluster
+      service: ecs-v2-service
+      codedeploy_application: ecs-v2
+      codedeploy_deployment_group: ecs-deployment-group
+      ecs_task_def_name: ecs-v2-task        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Install AWS CLI and jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y awscli jq
+    
+    - name: Task definition download
+      id: download-task-def
+      run: |
+        aws ecs describe-task-definition --task-definition $ecs_task_def_name --query taskDefinition > ./task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: update-task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: $container_name
+        image: ${{ needs.build.outputs.image }}
+
+    - name: Set appspec.json values
+      id: set-appspec-values
+      run: |
+        export TASK_DEF_ARN=$(aws ecs describe-task-definition --task-definition="$ecs_task_def_name" | jq '.taskDefinition.taskDefinitionArn')
+        cat ./appspec.json | jq --arg key "$TASK_DEF_ARN" '.Resources[].TargetService.Properties.TaskDefinition=$key' \
+           | jq --arg key "$container_port" '.Resources[].TargetService.Properties.LoadBalancerInfo.ContainerPort=$key' \
+           | jq --arg key "$container_name" '.Resources[].TargetService.Properties.LoadBalancerInfo.ContainerName=$key' > ./.aws/appspec.json
+        sed -i 's#\\"##g' ./.aws/appspec.json
+
+    - name: ECS task deployment using CodeDeploy
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      env:
+        ACTIONS_STEP_DEBUG: true # Enable step debug logging
+      with:
+        task-definition: ${{ steps.update-task-def.outputs.task-definition }}
+        service: ${{ env.service }}
+        cluster: ${{ env.cluster }}
+        wait-for-service-stability: true
+        codedeploy-appspec: ./.aws/appspec.json
+        codedeploy-application: ${{ env.codedeploy_application }}
+        codedeploy-deployment-group: ${{ env.codedeploy_deployment_group }}

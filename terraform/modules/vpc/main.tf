@@ -1,6 +1,11 @@
 
 data "aws_caller_identity" "current" {}
 
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
+
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -12,8 +17,8 @@ resource "aws_vpc" "main" {
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
-  count             = length(var.private_cidrs)
-  cidr_block        = var.private_cidrs[count.index]
+  count             = length(var.private_subnets)
+  cidr_block        = var.private_subnets[count.index]
   availability_zone = var.azs[count.index]
 
   tags = { Name = "private-subnet-${count.index + 1}" }
@@ -25,15 +30,15 @@ resource "aws_route_table" "private_rt" {
 }
 
 resource "aws_route_table_association" "private_asso" {
-  count          = length(var.private_cidrs)
+  count          = length(var.private_subnets)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private_rt.id
 }
 
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
-  count                   = length(var.public_cidrs)
-  cidr_block              = var.public_cidrs[count.index]
+  count                   = length(var.public_subnets)
+  cidr_block              = var.public_subnets[count.index]
   availability_zone       = var.azs[count.index]
   map_public_ip_on_launch = true
 
@@ -44,7 +49,7 @@ resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = var.allow
+    cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
   }
 
@@ -52,7 +57,7 @@ resource "aws_route_table" "public_rt" {
 }
 
 resource "aws_route_table_association" "public_asso" {
-  count          = length(var.public_cidrs)
+  count          = length(var.public_subnets)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public_rt.id
 }

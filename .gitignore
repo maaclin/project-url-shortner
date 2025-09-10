@@ -7,9 +7,10 @@ __pycache__/
 *.out
 .plan
 terraform.tfstate*
-terraform.tfvars
+# terraform.tfvars
 /.terraform
 .terraform.lock.hcl
 git 
 
 .terraform
+.secrets

@@ -1,7 +1,7 @@
 
 
 resource "aws_lb" "alb" {
-  name               = "${local.name}-alb"
+  name               = "${local.name}"-alb
   internal           = false
   load_balancer_type = var.lb_type
   security_groups    = [aws_security_group.alb.id]
@@ -146,9 +146,4 @@ resource "aws_wafv2_web_acl" "alb" {
 resource "aws_wafv2_web_acl_association" "alb" {
   resource_arn = aws_lb.alb.arn
   web_acl_arn  = aws_wafv2_web_acl.alb.arn
-}
-
-output "waf_acl_arn" {
-  description = "ARN of the regional WAF ACL"
-  value       = aws_wafv2_web_acl.alb.arn
 }

@@ -19,7 +19,7 @@ resource "aws_route53_record" "alb" {
 
 resource "aws_acm_certificate" "https" {
   domain_name       = var.domain_name_acm
-  validation_method = var.validation_method
+  validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -31,7 +31,7 @@ resource "aws_route53_record" "cert_valid" {
   allow_overwrite = true
   name            = each.value.name
   records         = [each.value.record]
-  ttl             = var.acm_ttl
+  ttl             = 60
   type            = each.value.type
 
   for_each = {

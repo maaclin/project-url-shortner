@@ -1,13 +1,13 @@
 
-resource "aws_codedeploy_app" "example" {
+resource "aws_codedeploy_app" "ecs" {
   compute_platform = "ECS"
   name             = local.name
 }
 
-resource "aws_codedeploy_deployment_group" "example" {
-  app_name               = aws_codedeploy_app.example.name
+resource "aws_codedeploy_deployment_group" "ecs" {
+  app_name               = aws_codedeploy_app.ecs.name
   deployment_config_name = "CodeDeployDefault.ECSCanary10Percent5Minutes"
-  deployment_group_name  = "example"
+  deployment_group_name  = "ecs-deployment-group"
   service_role_arn       = aws_iam_role.codedeploy.arn
 
   auto_rollback_configuration {
@@ -61,3 +61,4 @@ resource "aws_codedeploy_deployment_group" "example" {
     }
   }
 }
+

@@ -1,12 +1,12 @@
 
-// 2 - ECS Module -- depends on dynamodb table???
+// 2 - ECS Module
 
 resource "aws_ecs_cluster" "ecs_cluster" {
   name = "${local.name}-cluster"
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name            = "${local.name}-ecs-service"
+  name            = "${local.name}-service"
   cluster         = aws_ecs_cluster.ecs_cluster.id
   task_definition = aws_ecs_task_definition.ecs_task.arn
   desired_count   = 1
@@ -20,7 +20,7 @@ resource "aws_ecs_service" "ecs_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.blue.arn
-    container_name   = "${local.name}-cluster"
+    container_name   = local.name
     container_port   = 8080
   }
 
@@ -28,9 +28,11 @@ resource "aws_ecs_service" "ecs_service" {
     type = "CODE_DEPLOY"
   }
 
-  # lifecycle {
-  #   ignore_changes = [aws_ecs_task_definition.ecs_task.arn]
-  # }
+  # ignore changes in image ID outside Terraform, i.e. in GitHub actions
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 
   depends_on = [aws_lb_listener.https]
 }
@@ -46,7 +48,7 @@ resource "aws_ecs_task_definition" "ecs_task" {
 
   container_definitions = jsonencode([
     {
-      name      = "${local.name}-cluster"
+      name      = local.name
       image     = "${aws_ecr_repository.url.repository_url}:latest"
       essential = true
 
@@ -57,7 +59,7 @@ resource "aws_ecs_task_definition" "ecs_task" {
           protocol      = var.tcp
         }
       ]
-      environment = [ 
+      environment = [
         {
           name  = "TABLE_NAME"
           value = aws_dynamodb_table.url.name
@@ -74,6 +76,28 @@ resource "aws_ecs_task_definition" "ecs_task" {
       }
     }
   ])
+}
+
+
+resource "aws_dynamodb_table" "url" {
+  name         = local.name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  lifecycle {
+    ignore_changes = all
+  }
+
+  tags = { Name = "${local.name}-db-table" }
+
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
