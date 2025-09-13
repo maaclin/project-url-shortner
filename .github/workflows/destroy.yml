@@ -28,6 +28,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "${{ secrets.ROLE_ARN }}"
+          role-session-name: destroy-tf
           aws-region: "${{ vars.REGION }}" 
 
       - name: Setup Terraform
