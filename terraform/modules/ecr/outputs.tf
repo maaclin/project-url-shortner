@@ -1,5 +1,5 @@
 
 output "ecr_repo" {
-  description = "URI of the ECR repository"
-  value       = aws_ecr_repository.url.repository_url
+  description = "URL of the ECR repository"
+  value       = data.aws_ecr_repository.url.repository_url
 }

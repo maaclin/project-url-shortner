@@ -82,8 +82,7 @@ resource "aws_lb_target_group" "green" {
     matcher             = "200-299"
   }
 
-  tags = {
-  Name = "${local.name}-green" }
+  tags = { Name = "${local.name}-green" }
 }
 
 resource "aws_lb_listener" "green" {
@@ -102,7 +101,7 @@ resource "aws_lb_listener" "green" {
 }
 
 
-# waf - association to alb 
+# WAF - Association to ALB 
 
 resource "aws_wafv2_web_acl" "alb" {
   name  = "mywebacl"

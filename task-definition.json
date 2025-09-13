@@ -1,0 +1,80 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:eu-west-2:354918400698:task-definition/ecs-v2-task:19",
+    "containerDefinitions": [
+        {
+            "name": "ecs-v2",
+            "image": "354918400698.dkr.ecr.eu-west-2.amazonaws.com/projects/url-shortner-repo:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "TABLE_NAME",
+                    "value": "ecs-v2"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/ecs-v2",
+                    "awslogs-region": "eu-west-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "ecs-v2-task",
+    "taskRoleArn": "arn:aws:iam::354918400698:role/ecs-v2-ecs-task-role",
+    "executionRoleArn": "arn:aws:iam::354918400698:role/ecs-v2-ecs-task-execution-role",
+    "networkMode": "awsvpc",
+    "revision": 19,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512",
+    "registeredAt": "2025-09-13T02:54:17.781000+01:00",
+    "registeredBy": "arn:aws:iam::354918400698:user/maaclin99"
+}

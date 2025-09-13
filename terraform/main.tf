@@ -64,7 +64,7 @@ module "codedeploy" {
   cluster_name        = module.ecs.cluster_name
   ecs_service         = module.ecs.ecs_service
   blue_https_listener = module.alb.blue_https_listener
-  blue_tg_name             = module.alb.blue_tg_name
-  green_tg_name            = module.alb.green_tg_name
+  blue_tg_name        = module.alb.blue_tg_name
+  green_tg_name       = module.alb.green_tg_name
   green_test_listener = module.alb.green_test_listener
 }

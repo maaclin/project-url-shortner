@@ -9,3 +9,7 @@ output "task_role" {
 output "codedeploy_role" {
     value = aws_iam_role.codedeploy.arn
 }
+
+ output "role_arn" {
+     value = aws_iam_role.github_actions_role.arn
+   }

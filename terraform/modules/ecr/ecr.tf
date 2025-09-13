@@ -5,12 +5,12 @@ locals {
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_ecr_repository" "url" {
+data "aws_ecr_repository" "url" {
   name = var.ecr_repo
 }
 
 resource "aws_ecr_repository_policy" "ecr" {
-  repository = aws_ecr_repository.url.name
+  repository = data.aws_ecr_repository.url.name
 
   policy = jsonencode({
     Version = "2012-10-17",

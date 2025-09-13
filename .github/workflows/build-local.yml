@@ -34,13 +34,6 @@ jobs:
         run: |
           docker buildx build --platform linux/amd64 -t ${{ secrets.ECR_URI }}:latest --provenance false --no-cache . --load
 
-      # - name: Scan image
-      #   uses: aquasecurity/trivy-action@0.19.0
-      #   with:
-      #     image-ref: "${{ secrets.ECR_URI }}:$SHORT_SHA }}"
-      #     format: "table"
-      #     severity: "CRITICAL,HIGH"
-      #     exit-code: 0
           
       - name: Push image
         id: push

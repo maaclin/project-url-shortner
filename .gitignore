@@ -14,3 +14,4 @@ git
 
 .terraform
 .secrets
+.github/workflows/build-local.yml
