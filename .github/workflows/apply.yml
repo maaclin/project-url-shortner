@@ -1,4 +1,4 @@
-name: Apply
+name: TF Apply
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     
     defaults:
       run:
-        working-directory: ./terraform
+        working-directory: terraform
 
     steps:
       - name: Checkout

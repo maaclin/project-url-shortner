@@ -118,7 +118,7 @@ data "aws_iam_policy_document" "gha_trust_policy" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:maaclin99/projects/url-shortner-repo:*"]
+      values   = ["repo:maaclin/project-url-shortner:*"]
     }
   }
 }
