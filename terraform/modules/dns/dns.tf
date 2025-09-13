@@ -1,4 +1,7 @@
-
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
 
 data "aws_route53_zone" "main" {
   name         = var.domain_name
@@ -11,8 +14,8 @@ resource "aws_route53_record" "alb" {
   type    = var.route53_record_type
 
   alias {
-    name                   = aws_lb.alb.dns_name
-    zone_id                = aws_lb.alb.zone_id
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
     evaluate_target_health = true
   }
 }

@@ -1,6 +1,12 @@
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
+
+data "aws_caller_identity" "current" {}
 
 resource "aws_ecr_repository" "url" {
-  name = "projects/url-shortner-repo"
+  name = var.ecr_repo
 }
 
 resource "aws_ecr_repository_policy" "ecr" {
@@ -13,7 +19,8 @@ resource "aws_ecr_repository_policy" "ecr" {
       Effect = "Allow",
       Principal = {
         AWS = [
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.name}-ecs-task-execution-role"
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.name}-ecs-task-execution-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         ]
       },
       Action = [
@@ -25,8 +32,7 @@ resource "aws_ecr_repository_policy" "ecr" {
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetAuthorizationToken",
         "ecr:DescribeRepositories",
-        "ecr:PutImage"
-      ]
+        "ecr:PutImage"      ]
       }
     ]
   })

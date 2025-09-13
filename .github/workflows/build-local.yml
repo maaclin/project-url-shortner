@@ -14,8 +14,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set short SHA
-        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      # - name: Set short SHA
+      #   run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -32,7 +32,7 @@ jobs:
 
       - name: Build image
         run: |
-          docker buildx build --platform linux/amd64 -t ${{ secrets.ECR_URI }}:$SHORT_SHA --provenance false --no-cache . --load
+          docker buildx build --platform linux/amd64 -t ${{ secrets.ECR_URI }}:latest --provenance false --no-cache . --load
 
       # - name: Scan image
       #   uses: aquasecurity/trivy-action@0.19.0
@@ -45,9 +45,8 @@ jobs:
       - name: Push image
         id: push
         run: |
-          docker push ${{ secrets.ECR_URI }}:$SHORT_SHA
-          echo "image=${{ secrets.ECR_URI }}:$SHORT_SHA" >> $GITHUB_OUTPUT
-
+          docker push ${{ secrets.ECR_URI }}:latest
+          echo "image=${{ secrets.ECR_URI }}:latest" >> $GITHUB_OUTPUT 
 
   deploy:
     needs: build
@@ -82,15 +81,17 @@ jobs:
       - name: Task definition download
         id: download-task-def
         run: |
-          aws ecs describe-task-definition --task-definition $ecs_task_def_name --query taskDefinition > ./task-definition.json
-          cat ./task-definition.json | jq '.'
+          aws ecs describe-task-definition \
+          --task-definition 'ecs-v2-task' \
+          --query 'taskDefinition' \
+          --output json > ./task-definition.json
     
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: update-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.container_name }}
+          container-name: ecs-v2
           image: ${{ needs.build.outputs.image }}
     
       - name: Set appspec.json values

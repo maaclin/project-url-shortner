@@ -1,12 +1,15 @@
-
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
 
 resource "aws_lb" "alb" {
-  name               = "${local.name}"-alb
+  name               = "${local.name}-alb"
   internal           = false
   load_balancer_type = var.lb_type
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = aws_subnet.public[*].id
-
+  security_groups    = [var.alb_sg]
+  subnets            = var.public_subnets
+  
   tags = { Name = "${local.name}-alb" }
 }
 
@@ -15,7 +18,7 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.alb.arn
   port              = var.https
   protocol          = var.https_pro
-  certificate_arn   = aws_acm_certificate.https.arn
+  certificate_arn   = var.acm_cert
   ssl_policy        = var.ssl_policy
 
   default_action {
@@ -46,7 +49,7 @@ resource "aws_lb_target_group" "blue" {
   name        = "${local.name}-tg-blue"
   port        = 8080
   protocol    = var.http_pro
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
 
@@ -66,7 +69,7 @@ resource "aws_lb_target_group" "green" {
   name        = "${local.name}-tg-green"
   port        = 8080
   protocol    = var.http_pro
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
 
@@ -87,7 +90,7 @@ resource "aws_lb_listener" "green" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 8443
   protocol          = var.https_pro
-  certificate_arn   = aws_acm_certificate.https.arn
+  certificate_arn   = var.acm_cert
   ssl_policy        = var.ssl_policy
 
   default_action {

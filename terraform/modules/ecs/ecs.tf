@@ -1,3 +1,7 @@
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
 
 // 2 - ECS Module
 
@@ -13,15 +17,15 @@ resource "aws_ecs_service" "ecs_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = aws_subnet.private[*].id
-    security_groups  = [aws_security_group.ecs_sg.id]
+    subnets          = var.private_subnets
+    security_groups  = [var.ecs_sg]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.blue.arn
+    target_group_arn = var.blue_tg_arn
     container_name   = local.name
-    container_port   = 8080
+    container_port   = "8080"
   }
 
   deployment_controller {
@@ -34,29 +38,29 @@ resource "aws_ecs_service" "ecs_service" {
     ignore_changes = [task_definition]
   }
 
-  depends_on = [aws_lb_listener.https]
+  depends_on = [var.blue_listener]
 }
 
 resource "aws_ecs_task_definition" "ecs_task" {
   family                   = "${local.name}-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = var.ecs_cpu
-  memory                   = var.ecs_memory
-  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = var.execution_role
+  task_role_arn            = var.task_role
 
   container_definitions = jsonencode([
     {
       name      = local.name
-      image     = "${aws_ecr_repository.url.repository_url}:latest"
+      image     = "${var.ecr_repo}:latest"
       essential = true
 
       portMappings = [
         {
           containerPort = 8080
           hostPort      = 8080
-          protocol      = var.tcp
+          protocol      = "tcp"
         }
       ]
       environment = [
@@ -78,6 +82,7 @@ resource "aws_ecs_task_definition" "ecs_task" {
   ])
 }
 
+/// DynamoDB Table ///
 
 resource "aws_dynamodb_table" "url" {
   name         = local.name
@@ -99,6 +104,8 @@ resource "aws_dynamodb_table" "url" {
   tags = { Name = "${local.name}-db-table" }
 
 }
+
+// CloudWatch /// 
 
 resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/ecs/${local.name}"
@@ -148,10 +155,10 @@ resource "aws_sns_topic" "alerts" {
 resource "aws_sns_topic_subscription" "cpu_alert" {
   topic_arn = aws_sns_topic.alerts.arn
   protocol  = "email"
-  endpoint  = var.email_address
+  endpoint  = var.email
 }
 
-## CloudWatch alarm monitors CPU and memory utilization on the cluster and triggers alarm > 80% for two consecutive periods of 60 seconds. 
+## CloudWatch alarm monitors CPU and memory  on the cluster and triggers alarm > 80% for 2 periods of 60 seconds. 
 ## The alarm sends a notification to an SNS topic configured to send email alerts.
 
 resource "aws_cloudwatch_dashboard" "ecs_dashboard" {
@@ -167,7 +174,8 @@ resource "aws_cloudwatch_dashboard" "ecs_dashboard" {
         properties = {
           metrics = [
             ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.ecs_cluster.name],
-            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.ecs_cluster.name]
+            ["AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.ecs_cluster.name],
+            
           ]
           title   = "ECS Cluster CPU and Memory Utilization"
           view    = "timeSeries"

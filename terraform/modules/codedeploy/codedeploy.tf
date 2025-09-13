@@ -1,3 +1,7 @@
+locals {
+  name = "ecs-v2"
+  region = "eu-west-2"
+}
 
 resource "aws_codedeploy_app" "ecs" {
   compute_platform = "ECS"
@@ -8,7 +12,7 @@ resource "aws_codedeploy_deployment_group" "ecs" {
   app_name               = aws_codedeploy_app.ecs.name
   deployment_config_name = "CodeDeployDefault.ECSCanary10Percent5Minutes"
   deployment_group_name  = "ecs-deployment-group"
-  service_role_arn       = aws_iam_role.codedeploy.arn
+  service_role_arn       = var.codedeploy_role
 
   auto_rollback_configuration {
     enabled = true
@@ -37,26 +41,26 @@ resource "aws_codedeploy_deployment_group" "ecs" {
   }
 
   ecs_service {
-    cluster_name = aws_ecs_cluster.ecs_cluster.name
-    service_name = aws_ecs_service.ecs_service.name
+    cluster_name = var.cluster_name
+    service_name = var.ecs_service
   }
 
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = [aws_lb_listener.https.arn]
+        listener_arns = [var.blue_https_listener]
       }
 
       test_traffic_route {
-        listener_arns = [aws_lb_listener.green.arn]
+        listener_arns = [var.green_test_listener]
       }
 
       target_group {
-        name = aws_lb_target_group.blue.name
+        name = var.blue_tg_name
       }
 
       target_group {
-        name = aws_lb_target_group.green.name
+        name = var.green_tg_name
       }
     }
   }

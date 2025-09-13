@@ -64,6 +64,8 @@ The project uses GitHub Actions for continuous integration and deployment:
 
 ![build](./images/api.png)
 
+![build](./images/url-page.png)
+
 ## Design Decisions and Trade-offs
 
 - Using VPC Endpoints instead of NAT Gateways?
