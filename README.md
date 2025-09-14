@@ -82,7 +82,7 @@ The project uses GitHub Actions for continuous integration and deployment:
 ![build](./images/build.png)
 ![codedeploy](./images/codedeploy.png)
 
-![sucess](./images/sucess.png)
+![sucess](./images/success.png)
 
 ### CD Workflow
 
